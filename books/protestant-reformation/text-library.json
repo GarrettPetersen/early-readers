@@ -1,0 +1,29 @@
+{
+  "pages": [
+    {
+      "slug": "01",
+      "kind": "page",
+      "image": "1.tif",
+      "text": {
+        "top": "A long time ago, people made up letters so they could write."
+      }
+    },
+    {
+      "slug": "02",
+      "kind": "page",
+      "image": "2.tif",
+      "text": {
+        "top": "But the only way to make a copy was to write it down again.",
+        "bottom": "This took a long time."
+      }
+    },
+    {
+      "slug": "03",
+      "kind": "page",
+      "image": "3.tif",
+      "text": {
+        "top": "If only there were a better way…"
+      }
+    }
+  ]
+}

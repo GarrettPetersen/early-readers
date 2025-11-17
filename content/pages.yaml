@@ -1,0 +1,44 @@
+book:
+  title: "Sample Early Reader"
+  trim_size_in:
+    width: 6.0
+    height: 9.0
+  bleed_in: 0.125
+  output_pdf: ../build/sample-book.pdf
+  image_folder: ../assets/images
+  text_library: text/library.json
+  font:
+    name: Lexend
+    path: ../fonts/Lexend/static/Lexend-Regular.ttf
+  text_layout:
+    top:
+      font_size_pt: 28
+      box_height_in: 1.8
+      inset_in:
+        left: 0.6
+        right: 0.6
+        top: 0.6
+    bottom:
+      font_size_pt: 26
+      box_height_in: 1.6
+      inset_in:
+        left: 0.6
+        right: 0.6
+        bottom: 0.6
+  defaults:
+    image_scale: 1.0
+    image_offset_in:
+      x: 0
+      y: 0
+pages:
+  - slug: cover
+    image: cover.tiff
+  - slug: river-town
+    image: chapter1.tiff
+  - slug: stone-bridge-spread
+    kind: spread
+    image: spread-river.tiff
+    image_scale: 1.1
+    image_offset_in:
+      x: 0.0
+      y: 0.1

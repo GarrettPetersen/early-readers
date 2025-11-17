@@ -1,0 +1,41 @@
+book:
+  title: "The Protestant Reformation"
+  trim_size_in:
+    width: 6.0
+    height: 9.0
+  bleed_in: 0.125
+  output_pdf: ../../build/protestant-reformation.pdf
+  image_folder: images
+  text_library: text-library.json
+  font:
+    name: Lexend
+    path: ../../fonts/Lexend/static/Lexend-Regular.ttf
+  text_layout:
+    top:
+      align: left
+      font_size_pt: 26
+      box_height_in: 2.0
+      inset_in:
+        top: 0.5
+        bottom: 0.5
+        left: 0.5
+        right: 0.5
+        inner: 0.75
+        outer: 0.5
+    bottom:
+      align: left
+      font_size_pt: 24
+      box_height_in: 1.6
+      inset_in:
+        top: 0.5
+        bottom: 0.5
+        left: 0.5
+        right: 0.5
+        inner: 0.75
+        outer: 0.5
+  defaults:
+    image_scale: 1.0
+    image_offset_in:
+      x: 0
+      y: 0
+pages: []

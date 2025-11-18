@@ -35,6 +35,7 @@ class RegionLayout:
     style: ParagraphStyle
     box_height: float
     insets: Dict[str, Optional[float]]
+    vertical_anchor: str
 
 
 @dataclass
@@ -103,10 +104,9 @@ class BookBuilder:
                 raise FileNotFoundError(f"Text library file not found: {lib_path}")
             self.text_library, self.library_pages = self._load_text_library(lib_path)
 
-        text_layout_cfg = self.book_cfg.get("text_layout", {})
+        text_layout_cfg = self.book_cfg.get("text_layout", {}) or {}
         self.text_regions: Dict[str, RegionLayout] = {}
-        for name in ("top", "bottom"):
-            cfg = text_layout_cfg.get(name)
+        for name, cfg in text_layout_cfg.items():
             if not cfg:
                 continue
             folder_path = None
@@ -142,6 +142,14 @@ class BookBuilder:
                 insets["inner"] = self._inches_to_points(inset_cfg["inner"])
             if "outer" in inset_cfg:
                 insets["outer"] = self._inches_to_points(inset_cfg["outer"])
+            if "center" in inset_cfg:
+                insets["center"] = self._inches_to_points(inset_cfg["center"])
+
+            origin = (cfg.get("origin") or ("top" if name == "top" else "bottom")).lower()
+            if origin not in {"top", "bottom", "center"}:
+                raise ValueError(
+                    f"text_layout.{name}.origin must be one of 'top', 'bottom', or 'center' (got {origin})."
+                )
 
             self.text_regions[name] = RegionLayout(
                 name=name,
@@ -149,6 +157,7 @@ class BookBuilder:
                 style=style,
                 box_height=box_height,
                 insets=insets,
+                vertical_anchor=origin,
             )
 
         defaults = self.book_cfg.get("defaults", {})
@@ -159,12 +168,23 @@ class BookBuilder:
             "y": self._inches_to_points(offset_in.get("y", 0.0)),
         }
 
+        self.missing_images: Dict[str, Path] = {}
+
     def build(self) -> None:
         c = canvas.Canvas(str(self.output_pdf), pagesize=(self.page_width_pt, self.page_height_pt))
+        rendered_pages = 0
         for page in self._expand_pages():
-            self._draw_page(c, page)
+            has_image = page.image_path.exists()
+            if not has_image:
+                self.missing_images.setdefault(page.slug, page.image_path)
+            self._draw_page(c, page, has_image)
+            rendered_pages += 1
         c.save()
-        print(f"Created {self.output_pdf}")
+        print(f"Created {self.output_pdf} ({rendered_pages} pages)")
+        if self.missing_images:
+            print("Skipped pages because images were missing:")
+            for slug, path in self.missing_images.items():
+                print(f"  - {slug}: {path}")
 
     def _expand_pages(self) -> Iterable[PageSpec]:
         pages = self.library_pages or self.raw.get("pages", [])
@@ -228,8 +248,8 @@ class BookBuilder:
                 )
                 page_number += 1
 
-    def _draw_page(self, canv: canvas.Canvas, page: PageSpec) -> None:
-        self._draw_background(canv, page)
+    def _draw_page(self, canv: canvas.Canvas, page: PageSpec, has_image: bool) -> None:
+        self._draw_background(canv, page, has_image)
         for region_name, layout in self.text_regions.items():
             text_ref = page.text_refs.get(region_name)
             if not text_ref:
@@ -237,9 +257,10 @@ class BookBuilder:
             self._draw_text(canv, layout, text_ref, page.page_number, page.spread_side)
         canv.showPage()
 
-    def _draw_background(self, canv: canvas.Canvas, page: PageSpec) -> None:
-        if not page.image_path.exists():
-            raise FileNotFoundError(f"Missing image for page '{page.slug}': {page.image_path}")
+    def _draw_background(self, canv: canvas.Canvas, page: PageSpec, has_image: bool) -> None:
+        if not has_image:
+            self._draw_blank_background(canv)
+            return
         image = ImageReader(str(page.image_path))
         if page.kind == "spread":
             self._draw_spread_background(canv, image, page)
@@ -252,6 +273,15 @@ class BookBuilder:
         x = (self.page_width_pt - draw_w) / 2 + page.image_offset["x"]
         y = (self.page_height_pt - draw_h) / 2 + page.image_offset["y"]
         canv.drawImage(image, x, y, width=draw_w, height=draw_h, preserveAspectRatio=True, mask="auto")
+
+    def _draw_blank_background(self, canv: canvas.Canvas) -> None:
+        canv.saveState()
+        canv.setFillColor(colors.white)
+        canv.rect(0, 0, self.page_width_pt, self.page_height_pt, stroke=0, fill=1)
+        canv.setStrokeColor(colors.Color(0.85, 0.85, 0.85))
+        canv.line(0, 0, self.page_width_pt, self.page_height_pt)
+        canv.line(0, self.page_height_pt, self.page_width_pt, 0)
+        canv.restoreState()
 
     def _draw_spread_background(self, canv: canvas.Canvas, image: ImageReader, page: PageSpec) -> None:
         img_w, img_h = image.getSize()
@@ -325,10 +355,14 @@ class BookBuilder:
         paragraph = Paragraph(content.replace("\n", "<br/>"), layout.style)
         width = self.page_width_pt - (left_inset + right_inset)
         height = layout.box_height
-        if layout.name == "top":
-            y = self.page_height_pt - layout.insets.get("top", 0.0) - height
+        anchor = layout.vertical_anchor
+        if anchor == "top":
+            y = self.page_height_pt - (layout.insets.get("top", 0.0) or 0.0) - height
+        elif anchor == "center":
+            center_offset = layout.insets.get("center", 0.0) or 0.0
+            y = (self.page_height_pt - height) / 2 + center_offset
         else:
-            y = layout.insets.get("bottom", 0.0)
+            y = layout.insets.get("bottom", 0.0) or 0.0
         frame = Frame(left_inset, y, width, height, showBoundary=False)
         frame.addFromList([paragraph], canv)
 

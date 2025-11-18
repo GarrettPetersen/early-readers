@@ -18,6 +18,15 @@ book:
         left: 0.6
         right: 0.6
         top: 0.6
+    middle:
+      align: center
+      origin: center
+      font_size_pt: 30
+      box_height_in: 1.2
+      inset_in:
+        left: 0.75
+        right: 0.75
+        center: 0.0
     bottom:
       font_size_pt: 26
       box_height_in: 1.6

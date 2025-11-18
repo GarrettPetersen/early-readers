@@ -42,6 +42,7 @@ Key fields you will edit most often:
   - `folder` (optional): path to look for `.txt` snippets (only needed if you plan to use file-based copy).
   - `font_size_pt`, `box_height_in`, `inset_in`: control the safe area and scale for the text block.
   - `inset_in.inner` / `.outer`: override the gutter vs outer margin independently (inner = spine edge, which flips automatically between left/right based on page number).
+  - Add additional regions such as `middle` by defining another block (e.g. `text_layout.middle`). Set `origin: top|bottom|center` to control the vertical anchor and use `inset_in.center` to nudge centered copy up/down.
   - Optional `color` or `align` keys let you style copy (`align: left|center|right|justify`).
 - `book.defaults`: fallback `image_scale` and `image_offset_in` values so you only override when a specific page needs tweaks.
 - `pages[].kind`: set to `spread` when one painting should stretch across two facing pages; default is `page`. Spreads must begin on a left-hand (even-numbered) page so the art lines up correctly in print—otherwise the generator raises an error asking you to insert a blank/filler page first. You can still override `span` manually for special cases.
@@ -62,6 +63,8 @@ Each entry under `pages:` represents either a single page or a spread:
         Builders raised stone arches that met in the middle like clasped hands.
       right: >
         Across the plaza, new arches started to mirror the old.
+    middle:
+      inline: "THE END"
     bottom:
       library: stone-bridge-spread   # fetches left/right entries from the central file
 ```
@@ -85,6 +88,7 @@ When `book.text_library` points to a JSON/YAML file that contains a `pages` list
   "image": "1.tif",
   "text": {
     "top": "The Protestant Reformation",
+    "middle": "THE END",
     "bottom": "A journey through questions, courage, and new ideas."
   }
 }

@@ -22,6 +22,15 @@ book:
         right: 0.5
         inner: 0.75
         outer: 0.5
+    middle:
+      align: center
+      origin: center
+      font_size_pt: 28
+      box_height_in: 1.3
+      inset_in:
+        left: 0.5
+        right: 0.5
+        center: 0.0
     bottom:
       align: left
       font_size_pt: 24

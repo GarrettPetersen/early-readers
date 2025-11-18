@@ -57,8 +57,530 @@
       "kind": "page",
       "image": "8.tif",
       "text": {
-        "top": "He makes metal blocks with letters on the ends.",
+        "top": "Then he puts lots of letter blocks into a machine.",
         "bottom": "He puts ink on the blocks and squishes them onto a piece of paper."
+      }
+    },
+    {
+      "slug": "09",
+      "kind": "page",
+      "image": "9.tif",
+      "text": {
+        "top": "The paper has words on it!"
+      }
+    },
+    {
+      "slug": "10",
+      "kind": "page",
+      "image": "10.tif",
+      "text": {
+        "top": "Now he can put in another piece of paper."
+      }
+    },
+    {
+      "slug": "11",
+      "kind": "page",
+      "image": "11.tif",
+      "text": {
+        "top": "It has the same words!"
+      }
+    },
+    {
+      "slug": "12",
+      "kind": "page",
+      "image": "12.tif",
+      "text": {
+        "top": "Johannes has invented a machine for making copies."
+      }
+    },
+    {
+      "slug": "13",
+      "kind": "page",
+      "image": "13.tif",
+      "text": {
+        "top": "That seems useful.",
+        "bottom": "What could go wrong?"
+      }
+    },
+    {
+      "slug": "1415",
+      "kind": "spread",
+      "image": "14.tif",
+      "text": {
+        "top": {
+          "left": "Rome, Italy 1517"
+        }
+      }
+    },
+    {
+      "slug": "16",
+      "kind": "page",
+      "image": "16.tif",
+      "text": {
+        "top": "Most people in Europe were Christians."
+      }
+    },
+    {
+      "slug": "17",
+      "kind": "page",
+      "image": "17.tif",
+      "text": {
+        "top": "That means they prayed to Jesus Christ."
+      }
+    },
+    {
+      "slug": "18",
+      "kind": "page",
+      "image": "18.tif",
+      "text": {
+        "top": "They learned what Jesus said from a book called the Bible.",
+        "bottom": "The Bible was in Latin."
+      }
+    },
+    {
+      "slug": "19",
+      "kind": "page",
+      "image": "19.tif",
+      "text": {
+        "top": "Most people did not know how to read Latin.",
+        "bottom": "So they asked their priests to read it for them."
+      }
+    },
+    {
+      "slug": "20",
+      "kind": "page",
+      "image": "20.tif",
+      "text": {
+        "top": "And the boss of all priests was the Pope in Rome."
+      }
+    },
+    {
+      "slug": "21",
+      "kind": "page",
+      "image": "21.tif",
+      "text": {
+        "top": "His name is Pope Leo the Tenth.",
+        "bottom": "Hi Leo!"
+      }
+    },
+    {
+      "slug": "2223",
+      "kind": "spread",
+      "image": "22.tif",
+      "text": {
+        "top": {
+          "left": "Wittenberg, Germany 1517"
+        }
+      }
+    },
+    {
+      "slug": "24",
+      "kind": "page",
+      "image": "24.tif",
+      "text": {
+        "top": "This is Martin Luther. He is a theologian.",
+        "bottom": "That means he studies the Bible."
+      }
+    },
+    {
+      "slug": "25",
+      "kind": "page",
+      "image": "25.tif",
+      "text": {
+        "top": "He is not happy about the Pope.",
+        "bottom": "He has a list of complaints."
+      }
+    },
+    {
+      "slug": "26",
+      "kind": "page",
+      "image": "26.tif",
+      "text": {
+        "top": "He is nailing them to the church door."
+      }
+    },
+    {
+      "slug": "27",
+      "kind": "page",
+      "image": "27.tif",
+      "text": {
+        "top": "Uh oh, Martin.",
+        "bottom": "That is not good for the door."
+      }
+    },
+    {
+      "slug": "28",
+      "kind": "page",
+      "image": "28.tif",
+      "text": {
+        "top": "Martin Luther makes more than one copy of his complaints.",
+        "bottom": "He uses Gutenberg’s machine to make lots of copies."
+      }
+    },
+    {
+      "slug": "29",
+      "kind": "page",
+      "image": "29.tif",
+      "text": {
+        "top": "People from all over Europe read them."
+      }
+    },
+    {
+      "slug": "3031",
+      "kind": "spread",
+      "image": "30.tif",
+      "text": {
+        "top": {
+          "left": "Worms, Germany 1521"
+        }
+      }
+    },
+    {
+      "slug": "32",
+      "kind": "page",
+      "image": "32.tif",
+      "text": {
+        "top": "Pope Leo is very mad."
+      }
+    },
+    {
+      "slug": "33",
+      "kind": "page",
+      "image": "33.tif",
+      "text": {
+        "top": "So is his friend, Charles the Fifth.",
+        "bottom": "(Charles the Fifth was an Emperor. That means he was very important.)"
+      }
+    },
+    {
+      "slug": "34",
+      "kind": "page",
+      "image": "34.tif",
+      "text": {
+        "top": "Leo and Charles want Martin to take back the things he said."
+      }
+    },
+    {
+      "slug": "35",
+      "kind": "page",
+      "image": "35.tif",
+      "text": {
+        "top": "But Martin says “Here I Stand.”",
+        "bottom": "He will not back down."
+      }
+    },
+    {
+      "slug": "36",
+      "kind": "page",
+      "image": "36.tif",
+      "text": {
+        "top": "Charles wants to punish Martin."
+      }
+    },
+    {
+      "slug": "37",
+      "kind": "page",
+      "image": "37.tif",
+      "text": {
+        "top": "Before he can do that, some robbers show up and grab Martin.",
+        "bottom": "Oh no!"
+      }
+    },
+    {
+      "slug": "38",
+      "kind": "page",
+      "image": "38.tif",
+      "text": {
+        "top": "But wait! Those aren't robbers.",
+        "bottom": "They are Martin’s friends."
+      }
+    },
+    {
+      "slug": "39",
+      "kind": "page",
+      "image": "39.tif",
+      "text": {
+        "top": "Martin hides in a castle.",
+        "bottom": "He has time to think."
+      }
+    },
+    {
+      "slug": "40",
+      "kind": "page",
+      "image": "40.tif",
+      "text": {
+        "top": "Martin thinks that if people could read the Bible, they would agree with Martin.",
+        "bottom": "But people can't read the Bible because it is in Latin."
+      }
+    },
+    {
+      "slug": "41",
+      "kind": "page",
+      "image": "41.tif",
+      "text": {
+        "top": "Martin writes down a copy of the Bible in German.",
+        "bottom": "Lots of people can read German."
+      }
+    },
+    {
+      "slug": "42",
+      "kind": "page",
+      "image": "42.tif",
+      "text": {
+        "top": "He prints lots of copies of the Bible in German.",
+        "bottom": "Lots of people read it."
+      }
+    },
+    {
+      "slug": "43",
+      "kind": "page",
+      "image": "43.tif",
+      "text": {
+        "top": "When people read the Bible, a lot of them decide they do not want to listen to the Pope.",
+        "bottom": "They are called “Protestants.”"
+      }
+    },
+    {
+      "slug": "4445",
+      "kind": "spread",
+      "image": "44.tif",
+      "text": {
+        "top": {
+          "left": "London, England 1527"
+        }
+      }
+    },
+    {
+      "slug": "46",
+      "kind": "page",
+      "image": "46.tif",
+      "text": {
+        "top": "This is Henry.",
+        "bottom": "They call him Henry the Eighth."
+      }
+    },
+    {
+      "slug": "47",
+      "kind": "page",
+      "image": "47.tif",
+      "text": {
+        "top": "He is the king of England.",
+        "bottom": "Hi Henry!"
+      }
+    },
+    {
+      "slug": "48",
+      "kind": "page",
+      "image": "48.tif",
+      "text": {
+        "top": "Henry is married to Catherine.",
+        "bottom": "She is Charles’s aunt. Hi Catherine!"
+      }
+    },
+    {
+      "slug": "49",
+      "kind": "page",
+      "image": "49.tif",
+      "text": {
+        "top": "Henry is not happy with Catherine.",
+        "bottom": "He asks the new Pope if he can un-marry her."
+      }
+    },
+    {
+      "slug": "50",
+      "kind": "page",
+      "image": "50.tif",
+      "text": {
+        "top": "Charles does not want Henry to un-marry his aunt."
+      }
+    },
+    {
+      "slug": "51",
+      "kind": "page",
+      "image": "51.tif",
+      "text": {
+        "top": "The new Pope does not want to make Charles mad.",
+        "bottom": "He tells Henry “no.”"
+      }
+    },
+    {
+      "slug": "52",
+      "kind": "page",
+      "image": "52.tif",
+      "text": {
+        "top": "Henry is mad.",
+        "bottom": "So Henry makes his own Church."
+      }
+    },
+    {
+      "slug": "53",
+      "kind": "page",
+      "image": "53.tif",
+      "text": {
+        "top": "It is called the Church of England.",
+        "bottom": "Henry is the boss of the Church of England."
+      }
+    },
+    {
+      "slug": "54",
+      "kind": "page",
+      "image": "54.tif",
+      "text": {
+        "top": "Henry un-marries Catherine and marries Anne Boleyn instead."
+      }
+    },
+    {
+      "slug": "55",
+      "kind": "page",
+      "image": "55.tif",
+      "text": {
+        "top": "Good luck Anne!",
+        "bottom": "It is not easy to be married to Henry."
+      }
+    },
+    {
+      "slug": "5657",
+      "kind": "spread",
+      "image": "56.tif",
+      "text": {
+        "top": {
+          "left": "Geneva, Switzerland 1536"
+        }
+      }
+    },
+    {
+      "slug": "58",
+      "kind": "page",
+      "image": "58.tif",
+      "text": {
+        "top": "This is John Calvin. Hi John!",
+        "bottom": "He is a theologian like Martin."
+      }
+    },
+    {
+      "slug": "59",
+      "kind": "page",
+      "image": "59.tif",
+      "text": {
+        "top": "He likes some of Martin’s ideas.",
+        "bottom": "But he has some other ideas too."
+      }
+    },
+    {
+      "slug": "60",
+      "kind": "page",
+      "image": "60.tif",
+      "text": {
+        "top": "He says people should not wear fancy clothes.",
+        "bottom": "He says people should not dance."
+      }
+    },
+    {
+      "slug": "61",
+      "kind": "page",
+      "image": "61.tif",
+      "text": {
+        "top": "He makes a lot of rules.",
+        "bottom": "Some people like his ideas. They are called “Calvinists.”"
+      }
+    },
+    {
+      "slug": "6263",
+      "kind": "spread",
+      "image": "62.tif",
+      "text": {
+        "top": {
+          "left": "Augsburg, Germany 1555"
+        }
+      }
+    },
+    {
+      "slug": "64",
+      "kind": "page",
+      "image": "64.tif",
+      "text": {
+        "top": "Lots of people in Germany liked Martin’s ideas."
+      }
+    },
+    {
+      "slug": "65",
+      "kind": "page",
+      "image": "65.tif",
+      "text": {
+        "top": "Lots of other people liked the Pope.",
+        "bottom": "Charles liked the Pope."
+      }
+    },
+    {
+      "slug": "6667",
+      "kind": "spread",
+      "image": "66.tif",
+      "text": {
+        "top": {
+          "left": "There were many fights between Charles and the Protestants.",
+          "right": "Sometimes Charles won."
+        }
+      }
+    },
+    {
+      "slug": "6869",
+      "kind": "spread",
+      "image": "68.tif",
+      "text": {
+        "top": {
+          "left": "Sometimes the Protestants won."
+        }
+      }
+    },
+    {
+      "slug": "70",
+      "kind": "page",
+      "image": "70.tif",
+      "text": {
+        "top": "They get together and agree to stop fighting."
+      }
+    },
+    {
+      "slug": "71",
+      "kind": "page",
+      "image": "71.tif",
+      "text": {
+        "top": "They agree that some places in Germany can be Catholic.",
+        "bottom": "That means they follow the Pope."
+      }
+    },
+    {
+      "slug": "72",
+      "kind": "page",
+      "image": "72.tif",
+      "text": {
+        "top": "Other places in Germany can be Lutheran.",
+        "bottom": "That means they follow Martin."
+      }
+    },
+    {
+      "slug": "73",
+      "kind": "page",
+      "image": "73.tif",
+      "text": {
+        "top": "Calvinism is still not allowed."
+      }
+    },
+    {
+      "slug": "74",
+      "kind": "page",
+      "image": "74.tif",
+      "text": {
+        "top": "They all stop fighting.",
+        "bottom": "For a little while, anyways."
+      }
+    },
+    {
+      "slug": "75",
+      "kind": "page",
+      "image": "75.tif",
+      "text": {
+        "middle": "THE END"
       }
     }
   ]

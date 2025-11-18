@@ -33,8 +33,6 @@ book:
 pages:
   - slug: cover
     image: cover.tiff
-  - slug: river-town
-    image: chapter1.tiff
   - slug: stone-bridge-spread
     kind: spread
     image: spread-river.tiff
@@ -42,3 +40,5 @@ pages:
     image_offset_in:
       x: 0.0
       y: 0.1
+  - slug: river-town
+    image: chapter1.tiff

@@ -43,6 +43,7 @@ class PageSpec:
     sequence_index: int
     page_number: int
     kind: str
+    spread_side: Optional[str]
     image_path: Path
     image_scale: float
     image_offset: Dict[str, float]
@@ -178,6 +179,11 @@ class BookBuilder:
                 span = 2 if kind == "spread" else 1
             if span < 1:
                 raise ValueError(f"Page span must be >= 1 (slug={block.get('slug')})")
+            if kind == "spread" and page_number % 2 == 1:
+                raise ValueError(
+                    f"Spread '{block.get('slug')}' must start on a left-hand page. "
+                    "Insert a blank page before it so it begins on an even page number."
+                )
             for index in range(span):
                 slug = block.get("slug") or f"page-{len(pages)}"
                 image_name = block.get("image")
@@ -191,12 +197,21 @@ class BookBuilder:
                     "y": self._inches_to_points(offset_cfg["y"]) if "y" in offset_cfg else self.default_offset["y"],
                 }
 
+                spread_side: Optional[str] = None
+                if kind == "spread":
+                    spread_side = "left" if index == 0 else "right"
+
                 text_refs: Dict[str, Optional[TextSource]] = {}
                 block_text = block.get("text", {})
                 for region_name in self.text_regions.keys():
                     ref = block_text.get(region_name)
                     resolved = self._resolve_text_reference(
-                        ref, index, slug, region_name, prefer_inline=using_library_pages
+                        ref,
+                        index,
+                        slug,
+                        region_name,
+                        spread_side=spread_side,
+                        prefer_inline=using_library_pages,
                     )
                     text_refs[region_name] = resolved
 
@@ -205,6 +220,7 @@ class BookBuilder:
                     sequence_index=index,
                     page_number=page_number,
                     kind=kind,
+                    spread_side=spread_side,
                     image_path=image_path,
                     image_scale=scale,
                     image_offset=offset,
@@ -218,13 +234,16 @@ class BookBuilder:
             text_ref = page.text_refs.get(region_name)
             if not text_ref:
                 continue
-            self._draw_text(canv, layout, text_ref, page.page_number)
+            self._draw_text(canv, layout, text_ref, page.page_number, page.spread_side)
         canv.showPage()
 
     def _draw_background(self, canv: canvas.Canvas, page: PageSpec) -> None:
         if not page.image_path.exists():
             raise FileNotFoundError(f"Missing image for page '{page.slug}': {page.image_path}")
         image = ImageReader(str(page.image_path))
+        if page.kind == "spread":
+            self._draw_spread_background(canv, image, page)
+            return
         img_w, img_h = image.getSize()
         cover_scale = max(self.page_width_pt / img_w, self.page_height_pt / img_h)
         final_scale = cover_scale * page.image_scale
@@ -234,8 +253,44 @@ class BookBuilder:
         y = (self.page_height_pt - draw_h) / 2 + page.image_offset["y"]
         canv.drawImage(image, x, y, width=draw_w, height=draw_h, preserveAspectRatio=True, mask="auto")
 
+    def _draw_spread_background(self, canv: canvas.Canvas, image: ImageReader, page: PageSpec) -> None:
+        img_w, img_h = image.getSize()
+        spread_width = self.page_width_pt * 2
+        spread_height = self.page_height_pt
+        cover_scale = max(spread_width / img_w, spread_height / img_h)
+        final_scale = cover_scale * page.image_scale
+        draw_w = img_w * final_scale
+        draw_h = img_h * final_scale
+        x = (spread_width - draw_w) / 2 + page.image_offset["x"]
+        y = (spread_height - draw_h) / 2 + page.image_offset["y"]
+
+        canv.saveState()
+        clip_path = canv.beginPath()
+        clip_path.rect(0, 0, self.page_width_pt, self.page_height_pt)
+        canv.clipPath(clip_path, stroke=0)
+
+        offset_x = x
+        if page.spread_side == "right":
+            offset_x -= self.page_width_pt
+
+        canv.drawImage(
+            image,
+            offset_x,
+            y,
+            width=draw_w,
+            height=draw_h,
+            preserveAspectRatio=True,
+            mask="auto",
+        )
+        canv.restoreState()
+
     def _draw_text(
-        self, canv: canvas.Canvas, layout: RegionLayout, text_ref: TextSource, page_number: int
+        self,
+        canv: canvas.Canvas,
+        layout: RegionLayout,
+        text_ref: TextSource,
+        page_number: int,
+        spread_side: Optional[str],
     ) -> None:
         if text_ref.mode == "inline":
             content = text_ref.value.strip()
@@ -283,13 +338,16 @@ class BookBuilder:
         index: int,
         page_slug: str,
         region_name: str,
+        spread_side: Optional[str],
         prefer_inline: bool = False,
     ) -> Optional[TextSource]:
-        source = self._coerce_text_source(ref, index, page_slug, region_name, prefer_inline=prefer_inline)
+        source = self._coerce_text_source(
+            ref, index, page_slug, region_name, spread_side=spread_side, prefer_inline=prefer_inline
+        )
         if source:
             return source
         if ref is None:
-            return self._text_from_library(page_slug, region_name, index)
+            return self._text_from_library(page_slug, region_name, index, spread_side=spread_side)
         return None
 
     def _coerce_text_source(
@@ -298,6 +356,7 @@ class BookBuilder:
         index: int,
         page_slug: str,
         region_name: str,
+        spread_side: Optional[str],
         prefer_inline: bool = False,
     ) -> Optional[TextSource]:
         if value is None:
@@ -307,7 +366,7 @@ class BookBuilder:
                 return None
             target = value[index] if index < len(value) else value[-1]
             return self._coerce_text_source(
-                target, index, page_slug, region_name, prefer_inline=prefer_inline
+                target, index, page_slug, region_name, spread_side, prefer_inline=prefer_inline
             )
         if isinstance(value, dict):
             if "inline" in value:
@@ -316,20 +375,36 @@ class BookBuilder:
                 return TextSource("file", str(value["file"]))
             if "library" in value:
                 key = str(value["library"] or page_slug)
-                return self._text_from_library(key, region_name, index)
+                return self._text_from_library(key, region_name, index, spread_side=spread_side)
+            directional_keys = {"left", "right"}
+            if directional_keys.intersection(value.keys()):
+                candidate = None
+                if spread_side and spread_side in value:
+                    candidate = value.get(spread_side)
+                elif "default" in value:
+                    candidate = value.get("default")
+                if candidate is None:
+                    return None
+                return self._coerce_text_source(
+                    candidate, index, page_slug, region_name, spread_side, prefer_inline=prefer_inline
+                )
             return None
         if isinstance(value, str):
             if value.startswith("@library"):
                 _, _, key = value.partition(":")
                 key = key or page_slug
-                return self._text_from_library(key, region_name, index)
+                return self._text_from_library(key, region_name, index, spread_side=spread_side)
             if prefer_inline:
                 return TextSource("inline", value)
             return TextSource("file", value)
         return TextSource("inline", str(value))
 
     def _text_from_library(
-        self, library_key: str, region_name: str, index: int
+        self,
+        library_key: str,
+        region_name: str,
+        index: int,
+        spread_side: Optional[str],
     ) -> Optional[TextSource]:
         if not self.text_library:
             return None
@@ -338,7 +413,7 @@ class BookBuilder:
             return None
         region_value = entry.get(region_name)
         return self._coerce_text_source(
-            region_value, index, library_key, region_name, prefer_inline=True
+            region_value, index, library_key, region_name, spread_side, prefer_inline=True
         )
 
     def _resolve_media_path(self, image_name: str) -> Path:

@@ -8,13 +8,14 @@ This repo is a lightweight pipeline for turning scanned watercolor spreads and s
 assets/images/              # legacy sandbox artwork
 books/
   └── protestant-reformation/
-        images/             # drop 1.tiff, 2.tiff, ... for that title
+        images/             # drop 1.tif, 2.tif, ... for that title
         pages.yaml          # layout + metadata for that book
         text-library.json   # per-book text + page metadata
 content/pages.yaml          # original sample layout
 content/text/library.json   # original sample text database
 fonts/                      # supplied Lexend family (already included)
 build/                      # generated PDFs land here (git-ignored)
+Makefile                    # convenience targets (sample/reformation/all)
 ```
 
 ## Workflow
@@ -43,7 +44,7 @@ Key fields you will edit most often:
   - `inset_in.inner` / `.outer`: override the gutter vs outer margin independently (inner = spine edge, which flips automatically between left/right based on page number).
   - Optional `color` or `align` keys let you style copy (`align: left|center|right|justify`).
 - `book.defaults`: fallback `image_scale` and `image_offset_in` values so you only override when a specific page needs tweaks.
-- `pages[].kind`: set to `spread` when one painting should stretch across two facing pages; default is `page`. You can still override `span` manually for special cases.
+- `pages[].kind`: set to `spread` when one painting should stretch across two facing pages; default is `page`. Spreads must begin on a left-hand (even-numbered) page so the art lines up correctly in print—otherwise the generator raises an error asking you to insert a blank/filler page first. You can still override `span` manually for special cases.
 
 Each entry under `pages:` represents either a single page or a spread:
 
@@ -57,13 +58,21 @@ Each entry under `pages:` represents either a single page or a spread:
     y: 0.1
   text:
     top:
-      inline: >
+      left: >
         Builders raised stone arches that met in the middle like clasped hands.
+      right: >
+        Across the plaza, new arches started to mirror the old.
     bottom:
-      library: stone-bridge-spread   # fetches bottom text from the central file
+      library: stone-bridge-spread   # fetches left/right entries from the central file
 ```
 
-If you omit `kind` (and `span`), the entry renders once. Set `kind: spread` to automatically mirror the art/text across two facing pages; if you supply lists for `text.top` / `text.bottom`, the generator will pick the correct entry for each side (falling back to the last item if the list is shorter than the span).
+If you omit `kind` (and `span`), the entry renders once. Set `kind: spread` to automatically crop a single painting across the left/right pages. For text, you can:
+
+- Provide arrays (legacy style) and the generator will pick the entry matching each side.
+- Provide directional keys (`left`/`right`) to control each half explicitly (and omit whichever side should stay blank).
+- Mix and match with `inline`, `file`, or `library` sources for maximum flexibility.
+
+The generator enforces that every spread starts on a left-hand (even) page so the printed book lines up correctly.
 
 ### Driving everything from JSON
 
@@ -81,24 +90,29 @@ When `book.text_library` points to a JSON/YAML file that contains a `pages` list
 }
 ```
 
-With this setup the YAML only holds book-level settings; all per-page updates happen inside the JSON file.
+With this setup the YAML only holds book-level settings; all per-page updates (including spreads and left/right text) happen inside the JSON file.
+
+### Spreads & printing alignment
+
+- Spread images are scaled once for the full 12"×9" (plus bleed) canvas, then clipped so page 1 shows the left half and page 2 shows the right half—what you see in the PDF is exactly what will line up on press.
+- Because of that clipping, spreads must begin on a left-hand (even-numbered) page. If you accidentally schedule a spread on a right-hand/odd page the generator fails fast and tells you to insert a blank/filler page first.
+- Text regions accept directional keys. For example, `text.top.left` renders only on the left page, `text.bottom.right` renders only on the right, and you can mix in `inline`, `file`, or `library` references at any level. Leave a side undefined if it should stay blank.
+- Inner vs outer insets automatically flip based on page parity, keeping the gutter margin wider than the trim edge.
 
 ## Generating the PDF
 
 ```bash
-cd /Users/garrettpetersen/early-readers
-python3 -m venv .venv        # optional, but keeps deps isolated
-source .venv/bin/activate
-pip install -r requirements.txt
-python generate_book.py --config content/pages.yaml
+make install            # sets up the virtualenv & dependencies (do this once)
+make sample             # rebuilds build/sample-book.pdf
+make reformation        # rebuilds build/protestant-reformation.pdf
 ```
 
-- The script prints the path to the finished PDF when it completes.
-- Re-run the command any time you update art, text, or layout; it will overwrite the old PDF.
+Prefer manual commands? Activate `.venv` and run `python generate_book.py --config <path>` like before. The script prints the path to the finished PDF and overwrites the previous file each time you run it.
 
 ## Troubleshooting
 
 - **Missing image/text**: the script stops with a helpful error that tells you which filename was missing (or which slug could not be found in the text library).
+- **Spread on the wrong side**: spreads must start on a left-hand (even-numbered) page. If you see this error, insert a blank/filler page or reorder your layout so the spread begins on an even page number.
 - **Multiple books**: duplicate `content/pages.yaml` (e.g. `books/mythic/pages.yaml`) or copy the `books/protestant-reformation/` pattern. Pass the desired file via `python generate_book.py --config books/mythic/pages.yaml`. Each config can point to its own text library, assets folder, and output path, so the repo can host any number of books.
 - **Scale & offset**: every page auto-scales background art to cover the full bleed area. Use `image_scale` (>1 to zoom in, <1 to zoom out) plus `image_offset_in` (`x`/`y` in inches) for fine positioning.
 - **Different fonts or colors**: point `book.font.path` to another `.ttf` and add `color: "#C71585"` inside the relevant text layout block.

@@ -8,13 +8,13 @@
     "bottom": "Grandmothers whispered how every tide carried a tiny piece of history."
   },
   "stone-bridge-spread": {
-    "top": [
-      "Builders raised stone arches that met in the middle like clasped hands.",
-      "Across the plaza, new arches started to mirror the old."
-    ],
-    "bottom": [
-      "Across the river, children practiced the same stories in new voices.",
-      "Each echo promised the past would keep flowing forward."
-    ]
+    "top": {
+      "left": "Builders raised stone arches that met in the middle like clasped hands.",
+      "right": "Across the plaza, new arches started to mirror the old."
+    },
+    "bottom": {
+      "left": "Across the river, children practiced the same stories in new voices.",
+      "right": "Each echo promised the past would keep flowing forward."
+    }
   }
 }

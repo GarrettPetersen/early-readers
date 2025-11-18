@@ -24,6 +24,16 @@
       "text": {
         "top": "If only there were a better way…"
       }
+    },
+    {
+      "slug": "04",
+      "kind": "spread",
+      "image": "4.tif",
+      "text": {
+        "top": {
+          "left": "Mainz, 1448"
+        }
+      }
     }
   ]
 }

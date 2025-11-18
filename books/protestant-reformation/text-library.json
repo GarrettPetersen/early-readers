@@ -26,13 +26,39 @@
       }
     },
     {
-      "slug": "04",
+      "slug": "0405",
       "kind": "spread",
       "image": "4.tif",
       "text": {
         "top": {
-          "left": "Mainz, 1448"
+          "left": "Mainz, Germany 1448"
         }
+      }
+    },
+    {
+      "slug": "06",
+      "kind": "page",
+      "image": "6.tif",
+      "text": {
+        "top": "This is Johannes Gutenberg.",
+        "bottom": "He has an idea."
+      }
+    },
+    {
+      "slug": "07",
+      "kind": "page",
+      "image": "7.tif",
+      "text": {
+        "top": "He makes metal blocks with letters on the ends."
+      }
+    },
+    {
+      "slug": "08",
+      "kind": "page",
+      "image": "8.tif",
+      "text": {
+        "top": "He makes metal blocks with letters on the ends.",
+        "bottom": "He puts ink on the blocks and squishes them onto a piece of paper."
       }
     }
   ]

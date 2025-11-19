@@ -17,7 +17,7 @@ from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
-from reportlab.platypus import Frame, Paragraph
+from reportlab.platypus import Paragraph
 
 POINTS_PER_INCH = 72
 ALIGNMENT_MAP = {
@@ -77,7 +77,9 @@ class BookBuilder:
         self.page_width_pt = (self.trim_width_in + bleed_in * 2) * POINTS_PER_INCH
         self.page_height_pt = (self.trim_height_in + bleed_in * 2) * POINTS_PER_INCH
 
-        self.output_pdf = self._resolve_path(self.book_cfg.get("output_pdf", "book.pdf"))
+        self.output_pdf = self._resolve_path(
+            self.book_cfg.get("output_pdf", "book.pdf")
+        )
         self.output_pdf.parent.mkdir(parents=True, exist_ok=True)
 
         image_folder = self.book_cfg.get("image_folder")
@@ -145,7 +147,9 @@ class BookBuilder:
             if "center" in inset_cfg:
                 insets["center"] = self._inches_to_points(inset_cfg["center"])
 
-            origin = (cfg.get("origin") or ("top" if name == "top" else "bottom")).lower()
+            origin = (
+                cfg.get("origin") or ("top" if name == "top" else "bottom")
+            ).lower()
             if origin not in {"top", "bottom", "center"}:
                 raise ValueError(
                     f"text_layout.{name}.origin must be one of 'top', 'bottom', or 'center' (got {origin})."
@@ -169,18 +173,28 @@ class BookBuilder:
         }
 
         self.missing_images: Dict[str, Path] = {}
+        self.total_pages = 0
+        self.pages_with_images = 0
+        self.word_count = 0
 
     def build(self) -> None:
-        c = canvas.Canvas(str(self.output_pdf), pagesize=(self.page_width_pt, self.page_height_pt))
+        c = canvas.Canvas(
+            str(self.output_pdf), pagesize=(self.page_width_pt, self.page_height_pt)
+        )
         rendered_pages = 0
         for page in self._expand_pages():
             has_image = page.image_path.exists()
             if not has_image:
                 self.missing_images.setdefault(page.slug, page.image_path)
             self._draw_page(c, page, has_image)
-            rendered_pages += 1
+            self.total_pages += 1
+            if has_image:
+                self.pages_with_images += 1
         c.save()
-        print(f"Created {self.output_pdf} ({rendered_pages} pages)")
+        print(f"Created {self.output_pdf}")
+        print(f"  Pages rendered: {self.total_pages}")
+        print(f"  Pages with art: {self.pages_with_images}")
+        print(f"  Estimated words: {self.word_count}")
         if self.missing_images:
             print("Skipped pages because images were missing:")
             for slug, path in self.missing_images.items():
@@ -213,8 +227,16 @@ class BookBuilder:
                 scale = float(block.get("image_scale", self.default_scale))
                 offset_cfg = block.get("image_offset_in", {})
                 offset = {
-                    "x": self._inches_to_points(offset_cfg["x"]) if "x" in offset_cfg else self.default_offset["x"],
-                    "y": self._inches_to_points(offset_cfg["y"]) if "y" in offset_cfg else self.default_offset["y"],
+                    "x": (
+                        self._inches_to_points(offset_cfg["x"])
+                        if "x" in offset_cfg
+                        else self.default_offset["x"]
+                    ),
+                    "y": (
+                        self._inches_to_points(offset_cfg["y"])
+                        if "y" in offset_cfg
+                        else self.default_offset["y"]
+                    ),
                 }
 
                 spread_side: Optional[str] = None
@@ -257,7 +279,9 @@ class BookBuilder:
             self._draw_text(canv, layout, text_ref, page.page_number, page.spread_side)
         canv.showPage()
 
-    def _draw_background(self, canv: canvas.Canvas, page: PageSpec, has_image: bool) -> None:
+    def _draw_background(
+        self, canv: canvas.Canvas, page: PageSpec, has_image: bool
+    ) -> None:
         if not has_image:
             self._draw_blank_background(canv)
             return
@@ -272,7 +296,15 @@ class BookBuilder:
         draw_h = img_h * final_scale
         x = (self.page_width_pt - draw_w) / 2 + page.image_offset["x"]
         y = (self.page_height_pt - draw_h) / 2 + page.image_offset["y"]
-        canv.drawImage(image, x, y, width=draw_w, height=draw_h, preserveAspectRatio=True, mask="auto")
+        canv.drawImage(
+            image,
+            x,
+            y,
+            width=draw_w,
+            height=draw_h,
+            preserveAspectRatio=True,
+            mask="auto",
+        )
 
     def _draw_blank_background(self, canv: canvas.Canvas) -> None:
         canv.saveState()
@@ -283,7 +315,9 @@ class BookBuilder:
         canv.line(0, self.page_height_pt, self.page_width_pt, 0)
         canv.restoreState()
 
-    def _draw_spread_background(self, canv: canvas.Canvas, image: ImageReader, page: PageSpec) -> None:
+    def _draw_spread_background(
+        self, canv: canvas.Canvas, image: ImageReader, page: PageSpec
+    ) -> None:
         img_w, img_h = image.getSize()
         spread_width = self.page_width_pt * 2
         spread_height = self.page_height_pt
@@ -332,7 +366,9 @@ class BookBuilder:
                 )
             text_path = layout.folder / text_ref.value
             if not text_path.exists():
-                raise FileNotFoundError(f"Text file '{text_ref.value}' not found in {layout.folder}")
+                raise FileNotFoundError(
+                    f"Text file '{text_ref.value}' not found in {layout.folder}"
+                )
             content = text_path.read_text(encoding="utf-8").strip()
         if not content:
             return
@@ -354,17 +390,27 @@ class BookBuilder:
 
         paragraph = Paragraph(content.replace("\n", "<br/>"), layout.style)
         width = self.page_width_pt - (left_inset + right_inset)
-        height = layout.box_height
+        max_height = layout.box_height
+        _, paragraph_height = paragraph.wrap(width, max_height)
+        paragraph_height = min(max_height, paragraph_height)
+        if paragraph_height <= 0:
+            paragraph_height = layout.style.leading
+
         anchor = layout.vertical_anchor
         if anchor == "top":
-            y = self.page_height_pt - (layout.insets.get("top", 0.0) or 0.0) - height
+            y = (
+                self.page_height_pt
+                - (layout.insets.get("top", 0.0) or 0.0)
+                - paragraph_height
+            )
         elif anchor == "center":
             center_offset = layout.insets.get("center", 0.0) or 0.0
-            y = (self.page_height_pt - height) / 2 + center_offset
-        else:
+            y = (self.page_height_pt - paragraph_height) / 2 + center_offset
+        else:  # bottom
             y = layout.insets.get("bottom", 0.0) or 0.0
-        frame = Frame(left_inset, y, width, height, showBoundary=False)
-        frame.addFromList([paragraph], canv)
+
+        paragraph.drawOn(canv, left_inset, y)
+        self.word_count += len(content.split())
 
     def _resolve_text_reference(
         self,
@@ -376,12 +422,19 @@ class BookBuilder:
         prefer_inline: bool = False,
     ) -> Optional[TextSource]:
         source = self._coerce_text_source(
-            ref, index, page_slug, region_name, spread_side=spread_side, prefer_inline=prefer_inline
+            ref,
+            index,
+            page_slug,
+            region_name,
+            spread_side=spread_side,
+            prefer_inline=prefer_inline,
         )
         if source:
             return source
         if ref is None:
-            return self._text_from_library(page_slug, region_name, index, spread_side=spread_side)
+            return self._text_from_library(
+                page_slug, region_name, index, spread_side=spread_side
+            )
         return None
 
     def _coerce_text_source(
@@ -400,7 +453,12 @@ class BookBuilder:
                 return None
             target = value[index] if index < len(value) else value[-1]
             return self._coerce_text_source(
-                target, index, page_slug, region_name, spread_side, prefer_inline=prefer_inline
+                target,
+                index,
+                page_slug,
+                region_name,
+                spread_side,
+                prefer_inline=prefer_inline,
             )
         if isinstance(value, dict):
             if "inline" in value:
@@ -409,7 +467,9 @@ class BookBuilder:
                 return TextSource("file", str(value["file"]))
             if "library" in value:
                 key = str(value["library"] or page_slug)
-                return self._text_from_library(key, region_name, index, spread_side=spread_side)
+                return self._text_from_library(
+                    key, region_name, index, spread_side=spread_side
+                )
             directional_keys = {"left", "right"}
             if directional_keys.intersection(value.keys()):
                 candidate = None
@@ -420,14 +480,21 @@ class BookBuilder:
                 if candidate is None:
                     return None
                 return self._coerce_text_source(
-                    candidate, index, page_slug, region_name, spread_side, prefer_inline=prefer_inline
+                    candidate,
+                    index,
+                    page_slug,
+                    region_name,
+                    spread_side,
+                    prefer_inline=prefer_inline,
                 )
             return None
         if isinstance(value, str):
             if value.startswith("@library"):
                 _, _, key = value.partition(":")
                 key = key or page_slug
-                return self._text_from_library(key, region_name, index, spread_side=spread_side)
+                return self._text_from_library(
+                    key, region_name, index, spread_side=spread_side
+                )
             if prefer_inline:
                 return TextSource("inline", value)
             return TextSource("file", value)
@@ -447,7 +514,12 @@ class BookBuilder:
             return None
         region_value = entry.get(region_name)
         return self._coerce_text_source(
-            region_value, index, library_key, region_name, spread_side, prefer_inline=True
+            region_value,
+            index,
+            library_key,
+            region_name,
+            spread_side,
+            prefer_inline=True,
         )
 
     def _resolve_media_path(self, image_name: str) -> Path:
@@ -491,11 +563,15 @@ class BookBuilder:
                 if "texts" in data and isinstance(data["texts"], dict):
                     texts = data["texts"]
                 else:
-                    texts = {k: v for k, v in data.items() if k not in {"pages", "texts"}}
+                    texts = {
+                        k: v for k, v in data.items() if k not in {"pages", "texts"}
+                    }
             else:
                 texts = data
         else:
-            raise ValueError("Text library file must be a mapping, list, or contain a 'pages' list.")
+            raise ValueError(
+                "Text library file must be a mapping, list, or contain a 'pages' list."
+            )
 
         if not isinstance(texts, dict):
             raise ValueError("Text entries inside the library must form a mapping.")
@@ -510,7 +586,9 @@ class BookBuilder:
 
 
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Generate a PDF for the early-reader book.")
+    parser = argparse.ArgumentParser(
+        description="Generate a PDF for the early-reader book."
+    )
     parser.add_argument(
         "--config",
         default="content/pages.yaml",

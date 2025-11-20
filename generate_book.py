@@ -19,6 +19,8 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 from reportlab.platypus import Paragraph
 
+import fitz  # PyMuPDF
+
 POINTS_PER_INCH = 72
 ALIGNMENT_MAP = {
     "left": TA_LEFT,
@@ -81,6 +83,34 @@ class BookBuilder:
             self.book_cfg.get("output_pdf", "book.pdf")
         )
         self.output_pdf.parent.mkdir(parents=True, exist_ok=True)
+
+        image_output_cfg = self.book_cfg.get("image_output", {})
+        self.output_image_dir: Optional[Path] = None
+        self.image_export_format = "png"
+        self.image_export_dpi = 300
+        self.image_export_enabled = image_output_cfg is not False
+        if self.image_export_enabled:
+            default_dir = (self.output_pdf.parent / f"{self.output_pdf.stem}-pages").resolve()
+            folder_value = None
+            if isinstance(image_output_cfg, dict):
+                folder_value = image_output_cfg.get("folder")
+            if folder_value:
+                image_dir = self._resolve_path(folder_value)
+            else:
+                image_dir = default_dir
+            image_dir.mkdir(parents=True, exist_ok=True)
+            self.output_image_dir = image_dir
+            if isinstance(image_output_cfg, dict):
+                fmt = image_output_cfg.get("format", "png").lower()
+                if fmt in {"jpg", "jpeg"}:
+                    self.image_export_format = "jpg"
+                elif fmt == "png":
+                    self.image_export_format = "png"
+                else:
+                    self.image_export_format = "png"
+                self.image_export_dpi = int(image_output_cfg.get("dpi", 300))
+        else:
+            self.output_image_dir = None
 
         image_folder = self.book_cfg.get("image_folder")
         if not image_folder:
@@ -195,10 +225,32 @@ class BookBuilder:
         print(f"  Pages rendered: {self.total_pages}")
         print(f"  Pages with art: {self.pages_with_images}")
         print(f"  Estimated words: {self.word_count}")
+        self._export_page_images()
         if self.missing_images:
             print("Skipped pages because images were missing:")
             for slug, path in self.missing_images.items():
                 print(f"  - {slug}: {path}")
+
+    def _export_page_images(self) -> None:
+        if not self.output_image_dir:
+            return
+        try:
+            doc = fitz.open(str(self.output_pdf))
+        except Exception as exc:
+            print(f"  Skipping page image export: {exc}")
+            return
+        try:
+            for existing in self.output_image_dir.glob(f"*.{self.image_export_format}"):
+                existing.unlink()
+            for idx, page in enumerate(doc, start=1):
+                pix = page.get_pixmap(dpi=self.image_export_dpi)
+                if self.image_export_format == "jpg" and pix.alpha:
+                    pix = fitz.Pixmap(fitz.csRGB, pix)
+                out_path = self.output_image_dir / f"{idx:03d}.{self.image_export_format}"
+                pix.save(str(out_path))
+        finally:
+            doc.close()
+        print(f"  Page images written to {self.output_image_dir}")
 
     def _expand_pages(self) -> Iterable[PageSpec]:
         pages = self.library_pages or self.raw.get("pages", [])

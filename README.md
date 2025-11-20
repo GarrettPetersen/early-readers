@@ -16,6 +16,7 @@ content/text/library.json   # original sample text database
 fonts/                      # supplied Lexend family (already included)
 build/                      # generated PDFs land here (git-ignored)
 Makefile                    # convenience targets (sample/reformation/all)
+# After each build you also get per-page images under build/<bookname>-pages/
 ```
 
 ## Workflow
@@ -38,6 +39,9 @@ Key fields you will edit most often:
 - `book.font`: the Lexend file that gets embedded. Swap to another weight if you like.
 - `book.text_library`: optional JSON or YAML file that stores every sentence in one place. If a page does not specify `text.top` / `text.bottom`, the generator automatically looks up the entry whose key matches the page's `slug`.
 - `book.text_library.pages`: if the text file includes a `pages` list (or is itself a list), every entry inside it is treated as a page definition (`slug`, `kind`, `image`, `text`, etc.). In that case you can leave `pages:` empty inside the YAML after the initial setup.
+- `book.image_output`:
+  - Optional block to control the per-page image export. By default images land in `build/<output_pdf_stem>-pages/` as PNGs at 300 dpi.
+  - Override with `folder`, `format` (`png` or `jpg`), and `dpi`. Set the whole value to `false` to turn image export off.
 - `book.text_layout.top` / `.bottom`:
   - `folder` (optional): path to look for `.txt` snippets (only needed if you plan to use file-based copy).
   - `font_size_pt`, `box_height_in`, `inset_in`: control the safe area and scale for the text block.
@@ -107,8 +111,8 @@ With this setup the YAML only holds book-level settings; all per-page updates (i
 
 ```bash
 make install            # sets up the virtualenv & dependencies (do this once)
-make sample             # rebuilds build/sample-book.pdf
-make reformation        # rebuilds build/protestant-reformation.pdf
+make sample             # rebuilds build/sample-book.pdf (+ per-page PNGs)
+make reformation        # rebuilds build/protestant-reformation.pdf (+ PNGs)
 ```
 
 Prefer manual commands? Activate `.venv` and run `python generate_book.py --config <path>` like before. The script prints the path to the finished PDF and overwrites the previous file each time you run it.

@@ -76,8 +76,9 @@ class BookBuilder:
         bleed_in = float(self.book_cfg.get("bleed_in", 0))
         self.trim_width_in = float(trim.get("width", 6))
         self.trim_height_in = float(trim.get("height", 9))
-        self.page_width_pt = (self.trim_width_in + bleed_in * 2) * POINTS_PER_INCH
-        self.page_height_pt = (self.trim_height_in + bleed_in * 2) * POINTS_PER_INCH
+        total_bleed = bleed_in * 2
+        self.page_width_pt = (self.trim_width_in + total_bleed) * POINTS_PER_INCH
+        self.page_height_pt = (self.trim_height_in + total_bleed) * POINTS_PER_INCH
 
         self.output_pdf = self._resolve_path(
             self.book_cfg.get("output_pdf", "book.pdf")
@@ -90,7 +91,9 @@ class BookBuilder:
         self.image_export_dpi = 300
         self.image_export_enabled = image_output_cfg is not False
         if self.image_export_enabled:
-            default_dir = (self.output_pdf.parent / f"{self.output_pdf.stem}-pages").resolve()
+            default_dir = (
+                self.output_pdf.parent / f"{self.output_pdf.stem}-pages"
+            ).resolve()
             folder_value = None
             if isinstance(image_output_cfg, dict):
                 folder_value = image_output_cfg.get("folder")
@@ -111,6 +114,30 @@ class BookBuilder:
                 self.image_export_dpi = int(image_output_cfg.get("dpi", 300))
         else:
             self.output_image_dir = None
+
+        manuscript_cfg = self.book_cfg.get("manuscript", {})
+        self.manuscript_path: Optional[Path] = None
+        self.manuscript_format = "md"
+        self.manuscript_enabled = manuscript_cfg is not False
+        if self.manuscript_enabled:
+            default_manuscript = self.output_pdf.with_suffix(".md")
+            path_value = None
+            if isinstance(manuscript_cfg, dict):
+                path_value = manuscript_cfg.get("path")
+            if path_value:
+                manuscript_path = self._resolve_path(path_value)
+            else:
+                manuscript_path = default_manuscript
+            manuscript_path.parent.mkdir(parents=True, exist_ok=True)
+            self.manuscript_path = manuscript_path
+            if isinstance(manuscript_cfg, dict):
+                fmt = manuscript_cfg.get("format", "md").lower()
+                if fmt in {"md", "markdown"}:
+                    self.manuscript_format = "md"
+                else:
+                    self.manuscript_format = "txt"
+        else:
+            self.manuscript_path = None
 
         image_folder = self.book_cfg.get("image_folder")
         if not image_folder:
@@ -182,7 +209,10 @@ class BookBuilder:
             ).lower()
             if origin not in {"top", "bottom", "center"}:
                 raise ValueError(
-                    f"text_layout.{name}.origin must be one of 'top', 'bottom', or 'center' (got {origin})."
+                    "text_layout."
+                    f"{name}.origin must be one of "
+                    "'top', 'bottom', or 'center' "
+                    f"(got {origin})."
                 )
 
             self.text_regions[name] = RegionLayout(
@@ -206,12 +236,11 @@ class BookBuilder:
         self.total_pages = 0
         self.pages_with_images = 0
         self.word_count = 0
+        self.manuscript_entries: List[Dict[str, Any]] = []
 
     def build(self) -> None:
-        c = canvas.Canvas(
-            str(self.output_pdf), pagesize=(self.page_width_pt, self.page_height_pt)
-        )
-        rendered_pages = 0
+        page_size = (self.page_width_pt, self.page_height_pt)
+        c = canvas.Canvas(str(self.output_pdf), pagesize=page_size)
         for page in self._expand_pages():
             has_image = page.image_path.exists()
             if not has_image:
@@ -226,6 +255,7 @@ class BookBuilder:
         print(f"  Pages with art: {self.pages_with_images}")
         print(f"  Estimated words: {self.word_count}")
         self._export_page_images()
+        self._write_manuscript()
         if self.missing_images:
             print("Skipped pages because images were missing:")
             for slug, path in self.missing_images.items():
@@ -240,17 +270,69 @@ class BookBuilder:
             print(f"  Skipping page image export: {exc}")
             return
         try:
-            for existing in self.output_image_dir.glob(f"*.{self.image_export_format}"):
+            pattern = f"*.{self.image_export_format}"
+            for existing in self.output_image_dir.glob(pattern):
                 existing.unlink()
             for idx, page in enumerate(doc, start=1):
                 pix = page.get_pixmap(dpi=self.image_export_dpi)
                 if self.image_export_format == "jpg" and pix.alpha:
                     pix = fitz.Pixmap(fitz.csRGB, pix)
-                out_path = self.output_image_dir / f"{idx:03d}.{self.image_export_format}"
+                out_path = (
+                    self.output_image_dir / f"{idx:03d}.{self.image_export_format}"
+                )
                 pix.save(str(out_path))
         finally:
             doc.close()
         print(f"  Page images written to {self.output_image_dir}")
+
+    def _write_manuscript(self) -> None:
+        if not self.manuscript_path:
+            return
+        lines: List[str] = []
+        title = self.book_cfg.get("title", "Manuscript")
+        if self.manuscript_format == "md":
+            lines.append(f"# {title}")
+            lines.append("")
+        else:
+            lines.append(title)
+            lines.append("=" * len(title))
+            lines.append("")
+        current_page = None
+        region_order = {"top": 0, "middle": 1, "bottom": 2}
+
+        def sort_key(entry):
+            region_rank = region_order.get(entry["region"], 99)
+            spread_marker = entry["spread_side"] or ""
+            return (
+                entry["page_number"],
+                spread_marker,
+                region_rank,
+            )
+
+        for entry in sorted(self.manuscript_entries, key=sort_key):
+            key = (entry["page_number"], entry["spread_side"], entry["slug"])
+            if key != current_page:
+                current_page = key
+                page_label = f"Page {entry['page_number']}"
+                if entry["spread_side"]:
+                    page_label += f" ({entry['spread_side']})"
+                page_label += f" — {entry['slug']}"
+                if self.manuscript_format == "md":
+                    lines.append(f"## {page_label}")
+                else:
+                    lines.append(page_label)
+                lines.append("")
+            region_label = entry["region"].capitalize()
+            content = entry["content"]
+            if self.manuscript_format == "md":
+                lines.append(f"- **{region_label}:** {content}")
+            else:
+                lines.append(f"{region_label}: {content}")
+            lines.append("")
+        self.manuscript_path.write_text(
+            "\n".join(lines).rstrip() + "\n", encoding="utf-8"
+        )
+        print(f"  Manuscript written to {self.manuscript_path}")
 
     def _expand_pages(self) -> Iterable[PageSpec]:
         pages = self.library_pages or self.raw.get("pages", [])
@@ -264,11 +346,15 @@ class BookBuilder:
             else:
                 span = 2 if kind == "spread" else 1
             if span < 1:
-                raise ValueError(f"Page span must be >= 1 (slug={block.get('slug')})")
+                raise ValueError(
+                    "Page span must be >= 1 " f"(slug={block.get('slug')})"
+                )
             if kind == "spread" and page_number % 2 == 1:
                 raise ValueError(
-                    f"Spread '{block.get('slug')}' must start on a left-hand page. "
-                    "Insert a blank page before it so it begins on an even page number."
+                    "Spread '"
+                    f"{block.get('slug')}' must start on a left-hand page. "
+                    "Insert a blank page before it so it begins on an "
+                    "even page number."
                 )
             for index in range(span):
                 slug = block.get("slug") or f"page-{len(pages)}"
@@ -328,7 +414,14 @@ class BookBuilder:
             text_ref = page.text_refs.get(region_name)
             if not text_ref:
                 continue
-            self._draw_text(canv, layout, text_ref, page.page_number, page.spread_side)
+            self._draw_text(
+                canv,
+                layout,
+                text_ref,
+                page.page_number,
+                page.spread_side,
+                page.slug,
+            )
         canv.showPage()
 
     def _draw_background(
@@ -407,19 +500,21 @@ class BookBuilder:
         text_ref: TextSource,
         page_number: int,
         spread_side: Optional[str],
+        slug: str,
     ) -> None:
         if text_ref.mode == "inline":
             content = text_ref.value.strip()
         else:
             if not layout.folder:
                 raise ValueError(
-                    f"Region '{layout.name}' is not configured with a folder, "
+                    "Region '"
+                    f"{layout.name}' is not configured with a folder, "
                     "so file-based text sources are unavailable."
                 )
             text_path = layout.folder / text_ref.value
             if not text_path.exists():
                 raise FileNotFoundError(
-                    f"Text file '{text_ref.value}' not found in {layout.folder}"
+                    "Text file " f"'{text_ref.value}' not found in {layout.folder}"
                 )
             content = text_path.read_text(encoding="utf-8").strip()
         if not content:
@@ -428,7 +523,8 @@ class BookBuilder:
         right_inset = layout.insets.get("right", 0.0) or 0.0
         inner_inset = layout.insets.get("inner")
         outer_inset = layout.insets.get("outer")
-        is_recto = page_number % 2 == 1  # odd-numbered pages are on the right (recto)
+        # odd-numbered pages are on the right (recto)
+        is_recto = page_number % 2 == 1
         if inner_inset is not None:
             if is_recto:
                 left_inset = inner_inset
@@ -463,6 +559,15 @@ class BookBuilder:
 
         paragraph.drawOn(canv, left_inset, y)
         self.word_count += len(content.split())
+        self.manuscript_entries.append(
+            {
+                "page_number": page_number,
+                "slug": slug,
+                "spread_side": spread_side,
+                "region": layout.name,
+                "content": content,
+            }
+        )
 
     def _resolve_text_reference(
         self,
@@ -596,8 +701,13 @@ class BookBuilder:
             return 0.0
 
     @staticmethod
-    def _load_text_library(path: Path) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
-        loader = json.load if path.suffix.lower() == ".json" else yaml.safe_load
+    def _load_text_library(
+        path: Path,
+    ) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+        if path.suffix.lower() == ".json":
+            loader = json.load
+        else:
+            loader = yaml.safe_load
         with path.open("r", encoding="utf-8") as handle:
             data = loader(handle) or {}
 
@@ -622,7 +732,8 @@ class BookBuilder:
                 texts = data
         else:
             raise ValueError(
-                "Text library file must be a mapping, list, or contain a 'pages' list."
+                "Text library file must be a mapping, list, "
+                "or contain a 'pages' list."
             )
 
         if not isinstance(texts, dict):

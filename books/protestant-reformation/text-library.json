@@ -58,7 +58,7 @@
       "image": "8.tif",
       "text": {
         "top": "Then he puts lots of letter blocks into a machine.",
-        "bottom": "He puts ink on the blocks and squishes them onto a piece of paper."
+        "bottom": "He puts ink on the blocks and presses them onto a piece of paper."
       }
     },
     {
@@ -90,7 +90,8 @@
       "kind": "page",
       "image": "12.tif",
       "text": {
-        "top": "Johannes has invented a machine for making copies."
+        "top": "Johannes has invented a machine for making copies.",
+        "bottom": "A printing press!"
       }
     },
     {
@@ -134,7 +135,7 @@
       "image": "18.tif",
       "text": {
         "top": "They learned what Jesus said from a book called the Bible.",
-        "bottom": "The Bible was in Latin."
+        "bottom": "The Bible was in Latin. Many Latin Bibles were made with the new printing press."
       }
     },
     {
@@ -214,7 +215,7 @@
       "image": "28.tif",
       "text": {
         "top": "Martin Luther makes more than one copy of his complaints.",
-        "bottom": "He uses Gutenberg’s machine to make lots of copies."
+        "bottom": "He uses a printing press to make lots of copies."
       }
     },
     {
